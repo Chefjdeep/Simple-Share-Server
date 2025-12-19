@@ -5,8 +5,6 @@
 **Share files between devices on the same WiFi network instantly!**  
 A Progressive Web App (PWA) that works like a native mobile app for seamless file sharing between laptops, phones, and tablets.
 
-![Simple Share Server PWA](https://img.icons8.com/color/96/000000/share.png)
-
 ##  Features
 
 ### 📱 **PWA Features**
