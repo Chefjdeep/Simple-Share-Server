@@ -48,8 +48,8 @@ A Progressive Web App (PWA) that works like a native mobile app for seamless fil
 
 ```bash
 # Clone or download the project
-git clone https://github.com/yourusername/simple-share.git
-cd simple-share
+git clone https://github.com/Chefjdeep/Simple-Share-Server.git
+cd Simple-Share-Server
 
 # Install dependencies
 pip install flask
@@ -66,7 +66,7 @@ python app.py
    - Replace with actual IP shown in terminal
 3. Tap **Share** button (📤)
 4. Tap **"Add to Home Screen"**
-5. Name it "Simple Share"
+5. Name it "Simple-Share-Server"
 6. Tap **"Add"**
 
 #### **Android:**
@@ -80,7 +80,7 @@ python app.py
 #### **Chrome Desktop:**
 1. Visit `http://localhost:5000/mobile`
 2. Look for install icon in address bar (📥)
-3. Click **"Install Simple Share"**
+3. Click **"Install Simple-Share-Server"**
 
 ## 📱 How to Use
 
