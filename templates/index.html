@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Share Server</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-wifi"></i> Simple Share Server</h1>
+            <p class="subtitle">Share files between devices on the same WiFi</p>
+            <a href="/mobile" class="mobile-link">
+                <i class="fas fa-mobile-alt"></i> Switch to Mobile View
+            </a>
+        </header>
+
+        <div class="network-info">
+            <div class="info-box">
+                <h2><i class="fas fa-network-wired"></i> Connection Information</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="label">Local URL:</span>
+                        <span class="value">http://localhost:5000</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Network URL:</span>
+                        <span class="value copyable" onclick="copyToClipboard('{{ network.url }}')">
+                            {{ network.url }} <i class="fas fa-copy"></i>
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">IP Address:</span>
+                        <span class="value copyable" onclick="copyToClipboard('{{ network.ip }}')">
+                            {{ network.ip }} <i class="fas fa-copy"></i>
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Port:</span>
+                        <span class="value">{{ network.port }}</span>
+                    </div>
+                </div>
+                
+                <div class="qr-section">
+                    <h3><i class="fas fa-qrcode"></i> Scan to Connect</h3>
+                    <div id="qrcode"></div>
+                    <p>Scan this QR code with your phone's camera</p>
+                </div>
+                
+                <div class="instructions">
+                    <h3><i class="fas fa-mobile-alt"></i> How to Connect from Phone:</h3>
+                    <ol>
+                        <li>Make sure phone is on same WiFi network</li>
+                        <li>Open camera on phone and scan QR code above</li>
+                        <li>Or open browser and enter: <code>{{ network.url }}</code></li>
+                        <li>For better mobile experience, use: <code>{{ network.url }}/mobile</code></li>
+                        <li>Tap "Add to Home Screen" to install as app</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <main>
+            <section class="upload-section">
+                <h2><i class="fas fa-upload"></i> Upload Files</h2>
+                <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
+                    <div class="upload-area" id="dropArea">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Drag & drop files here or click to browse</p>
+                        <input type="file" name="file" id="fileInput" multiple accept="{{ allowed_extensions }}">
+                        <div class="file-info" id="fileInfo"></div>
+                    </div>
+                    <div class="form-footer">
+                        <p>Allowed files: {{ allowed_extensions }}</p>
+                        <button type="submit" class="btn upload-btn">
+                            <i class="fas fa-upload"></i> Upload Files
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="files-section">
+                <h2><i class="fas fa-files"></i> Shared Files ({{ files|length }})</h2>
+                {% if files %}
+                <div class="files-grid">
+                    {% for file in files %}
+                    <div class="file-card">
+                        <div class="file-icon">
+                            {% if file.name.lower().endswith(('.jpg', '.jpeg', '.png', '.gif')) %}
+                            <i class="fas fa-image"></i>
+                            {% elif file.name.lower().endswith(('.mp4', '.avi', '.mov')) %}
+                            <i class="fas fa-video"></i>
+                            {% elif file.name.lower().endswith(('.mp3', '.wav')) %}
+                            <i class="fas fa-music"></i>
+                            {% elif file.name.lower().endswith(('.pdf',)) %}
+                            <i class="fas fa-file-pdf"></i>
+                            {% else %}
+                            <i class="fas fa-file"></i>
+                            {% endif %}
+                        </div>
+                        <div class="file-details">
+                            <h3>{{ file.name }}</h3>
+                            <p class="file-meta">
+                                <span><i class="fas fa-hdd"></i> {{ (file.size/1024/1024)|round(2) if file.size > 1048576 else (file.size/1024)|round(1) }} {{ 'MB' if file.size > 1048576 else 'KB' }}</span>
+                                <span><i class="fas fa-clock"></i> {{ file.upload_time }}</span>
+                            </p>
+                        </div>
+                        <div class="file-actions">
+                            <a href="{{ file.url }}" class="btn download-btn" download>
+                                <i class="fas fa-download"></i>
+                            </a>
+                            <a href="/delete/{{ file.name }}" class="btn delete-btn" onclick="return confirm('Delete this file?')">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-folder-open"></i>
+                    <p>No files shared yet. Upload some files to get started!</p>
+                </div>
+                {% endif %}
+            </section>
+        </main>
+
+        <footer>
+            <p>Simple Share Server &copy; 2024 | All devices must be on the same WiFi network</p>
+            <p class="footer-links">
+                <a href="/mobile"><i class="fas fa-mobile-alt"></i> Mobile View</a> |
+                <a href="javascript:location.reload()"><i class="fas fa-sync-alt"></i> Refresh</a>
+            </p>
+        </footer>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <div class="flash-messages">
+            {% for message in messages %}
+            <div class="flash-message">
+                {{ message }}
+                <button class="close-flash" onclick="this.parentElement.remove()">×</button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- QR Code Library -->
+    <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+    
+    <script>
+        // Generate QR Code
+        document.addEventListener('DOMContentLoaded', function() {
+            new QRCode(document.getElementById("qrcode"), {
+                text: "{{ network.url }}/mobile",
+                width: 200,
+                height: 200
+            });
+            
+            // File input handling
+            const dropArea = document.getElementById('dropArea');
+            const fileInput = document.getElementById('fileInput');
+            const fileInfo = document.getElementById('fileInfo');
+            
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropArea.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, unhighlight, false);
+            });
+            
+            function highlight() {
+                dropArea.classList.add('highlight');
+            }
+            
+            function unhighlight() {
+                dropArea.classList.remove('highlight');
+            }
+            
+            dropArea.addEventListener('drop', handleDrop, false);
+            
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                fileInput.files = files;
+                updateFileInfo(files);
+            }
+            
+            fileInput.addEventListener('change', function() {
+                updateFileInfo(this.files);
+            });
+            
+            function updateFileInfo(files) {
+                if (files.length > 0) {
+                    let html = `<p><strong>${files.length} file(s) selected:</strong></p>`;
+                    for (let i = 0; i < Math.min(files.length, 5); i++) {
+                        html += `<p>• ${files[i].name} (${formatFileSize(files[i].size)})</p>`;
+                    }
+                    if (files.length > 5) {
+                        html += `<p>... and ${files.length - 5} more</p>`;
+                    }
+                    fileInfo.innerHTML = html;
+                } else {
+                    fileInfo.innerHTML = '';
+                }
+            }
+            
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+        });
+        
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(function() {
+                alert('Copied to clipboard: ' + text);
+            }, function(err) {
+                console.error('Could not copy text: ', err);
+            });
+        }
+    </script>
+</body>
+</html>
